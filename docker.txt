@@ -1,0 +1,49 @@
+docker image-> is a single file with all the deps and configs required to run a program
+container-> instance of an image, program with its own isolated set of hardware resources
+docker client-> docker CLI -> used to issue commands to
+client talks to docker daemon/server -> responsible for maintaing containers
+kernel connects the system hardware to the application software using system calls
+every operating system has a kernel
+namespacing -> segmentation of hdd and other resources nbased on the process that's asking for it/isolate resources 
+for a process such that whenever it makes a syscall it is directed to a specific piece of the hw
+control group-> used to limit the amount of resources that a particular process can use
+c groups and namespacing are specififc to the linux os
+the running process+the system resources it has access to = container
+
+image-> snapshot of the file system of a running application with a startup command
+
+docker installs a linux vm with its own kernel and all the containers are created inside this machine
+
+overriding default docker image startup cmd-> docker run <image> <alt-command> -> command should exist in the FS
+
+docker run = docker create + docker start
+docker start -a <container_id>-> -a flag allows to watch any output coming from the container
+
+once a container is created with a default startup command, the command cannot be changed while restarting container
+
+docker system prune -> to clean stopped containers, dangling images and build cache
+
+docker stop-> sigterm syscall-> directive for the the process to shut down in its own time after cleanup
+stop issues sigkill after 10s of grace period
+docker kill-> issues sigkill-> kills the process immediately with no grace time
+
+executing commands in running containers-> docker exec, executes an additional command inside the container
+docker exec -it(allow to provide i/p to container) <container_id> <command>
+
+every container is running on the linux vm env with 3 comm channels attached stdin, stdout, stderr
+-i -> attach the docker client to the standard input channel 
+-t -> formats the o/p
+
+shell access to the running container -> docker exec -it <container_id> sh(which is the command processor)
+
+starting a shell immediately during docker run -> docker run -it <image_name> sh
+
+creating a custom image
+create a dockerfile-> specify base image-> run commands to install deps-> startup command
+
+docker file instructions -> FROM, RUN, CMD
+base image provides an initial set of programs that can be used to further customize the image
+
+alpine is the most compact version of an image
+
+docker build -f dockerfile.dev .-> for using a different name for dockerfile

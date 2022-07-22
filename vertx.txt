@@ -1,0 +1,21 @@
+vert.x reactive applications on the JVM
+scalable as workloads grow and resilient when failures arise
+
+reactive-> 
+web server opens new threads for incoming requests if available 
+system has limited number of cores and hence can only create limited amount of threads
+solution is non blocking i/o or event loops -> events land up in a queue and are processed one after the other
+
+main verticle is the entry point for a vertex application
+actor like deployment and concurrency model
+actor model-> conceptual model of concurrent computation
+an actor is a fundamental unit of comp-> everything is an actor -> allowed operations are create another actor,
+send a message, designate how to handle the next message(actor can stores its own private state and update the next action)
+are lightweight and isolated can be updated by receving a message in its queue
+main verticle can have child deployments(each child can have multiple copies of the same depl with their own threads)
+verticle code is executed on event loop-> uses multiple event loops(multi-reactor pattern)
+each verticle runs on an event loop thread, thread safety and concurrency is handled here easily
+blocking i/o ops are run on worker threads
+blocking i/o is anything that blocks a thread eg. file i/o, heavy computation, waiting on n/w
+event bus is the nervous system of vertex, commn in a thread-safe no-blocking way
+one event bus per instance of vertx- supports pub sub, p2p, req-res messaging

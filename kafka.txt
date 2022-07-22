@@ -1,0 +1,81 @@
+topic: particular stream of data/similar to a table in a database without any constraints
+topics are split into  partitions/streams: ordered/gets incremental id called offset
+offset-> index of incoming data to the partition 
+once data is written to stream it cannot be changed/ data lives for a given time
+if a topic has say 3 partitions, until specified incoming data will be randomly assigned to any partition
+
+each kafka cluster comprises of brokers(servers)
+each broker contains certain topic partitions
+bootstrap broker- once connected to a single broker you have access to the entire cluster
+topic partition replication factor-> replicated n times over brokers, n number of copies for the same data
+leader of a partition-> one broker can be a leader of a partition, only this broker will serve and recieve data,
+	and the others(ISR-> in sync replica) will just sync
+producers write data to topics, they know automatically which broker and partition to write to
+producers can choose to receive ack for data writes
+	def- acks=1 leader sends ACK acks=all leader+replicas send ACKs
+message keys-> alphanumeric
+	keys=null data is sent round robin to partitions, msg1 to part1, msg2 to part2...
+	keys=part1 data will always be sent to this partition
+
+consumers-> read data from a topic(identified by name), know which broker to read from
+consumers read data in consumer groups, if there are more consumers in a groups than the no of partitiosn some will be inactive
+high number of consumers for a topic-> high number of partitions
+kafka stores the offsets at which a consumer group has been reading in a topic named __consumer_offsets
+	if a consumer dies it will be able to read back from where it left off
+cosumer can choose when to commit offsets -> atmost once(immediately when message is received)
+ ->atleast once(only when message is processed, in case of failure reads again)
+Two consumers that have the same group.id (consumer group id) will read from mutually exclusive partitions
+
+broker discovery-> bootstrap server->  each broker knows about all other clusters
+	whenever a new connection to the cluster is made, metadat of each broker is sent from the broker the connection was made
+
+zookeeper -> manages brokers, leader election, sends notifications to kafka when changes are made
+kafka cannot work without zookeeper
+zookeeper instacne deployed in odd numbers, leader manages writes, follower manage reads
+
+source system->producers->kafka cluster(with brokers)->consumers->target systems
+
+
+
+To produce data to a topic, a producer must provide the Kafka client with...Very important: 
+you only need to connect to one broker (any broker) and just provide the topic name you want to write to. 
+Kafka Clients will route your data to the appropriate brokers and partitions for you!
+
+create topics before producing to them:
+kafka-topics --bootstrap-server localhost:9092 --create --topic first-topic --partitions 3 --replication-factor 1
+
+produce to topics:
+kafka-console-producer --broker-list 127.0.0.1:9092 --topic first-topic
+	produce with key, value pairskubectl get services
+	
+kafka-console-producer --broker-list 127.0.0.1:9092 --topic first_topic --property parse.key=true --property key.separator=,
+
+consumer to a topic->
+live stream-> kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic knative-broker-default-kafka-broker
+to see all messages-> kafka-console-consumer --bootstrap-server localhost:9092 --topic first-topic --from-beginning
+consumer group-> kafka-console-consumer --bootstrap-server localhost:9092 --topic first-topic --group first-app
+multiple consumers with the same group will balance the load generated from a producer
+consumer with keys-> kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic first_topic --from-beginning --property print.key=true --property key.separator=,
+kafka-consumer-groups --bootstrap-server localhost:9092 --list
+
+reset offsets
+kafka-consumer-groups --bootstrap-server localhost:9092 --bootstrap-server localhost:9092 --group first-app --reset-offsets --to-earliest --execute --topic first-topic
+
+https://github.com/simplesteph/kafka-beginners-course/blob/master/kafka-basics/src/main/java/kafka/tutorial1/ProducerDemoWithCallback.java
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic INTERCEPT --from-beginning
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic PATIENTS_TO_FETCH --from-beginning
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic FETCHED_PATIENTS --from-beginning
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic PROCESSED_PATIENTS --from-beginning
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic ADHERENCE_ACTIVE --from-beginning
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic PHARMACY_ACTIVE --from-beginning
+
+
+kafka-console-producer.sh --broker-list localhost:9092 --topic PROCESSED_PATIENTS --property value.serializer=custom.class.serialization.JsonSerializer
+kafka-console-producer.sh --broker-list localhost:9092 --topic PROCESSED_PATIENTS {"title":"The Matrix","year":1999,"cast":["Keanu Reeves","Laurence Fishburne","Carrie-Anne Moss","Hugo Weaving","Joe Pantoliano"],"genres":["Science Fiction"]}.
+
+
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic PROCESSED_PATIENTS < /bin/resp.json
+
+kubectl exec -it kafka-0 -- /bin/sh
+kafka-console-consumer.sh --bootstrap-server kafka.default:9092 --topic knative-broker-default-broker --from-beginning
+kafka-topics.sh --list --bootstrap-server kafka.default:9092
